@@ -22,7 +22,13 @@ resource "aws_iam_role" "example" {
             "Principal": {
                 "Federated": "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com" # Change OIDC ARN
             },
-            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Action": [
+                "iam:CreateOpenIDConnectProvider",
+                "iam:CreateRole",
+                "iam:CreatePolicy",
+               "sts:AssumeRoleWithWebIdentity"
+              ],
+              "Resource": "*"
             "Condition": {
                 "StringEquals": {
                     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
