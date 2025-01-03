@@ -20,7 +20,7 @@ resource "aws_iam_role" "example" {
       {
         "Effect" : "Allow",
         "Principal" : {
-          "Federated" : "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com" # Change OIDC ARN and Remove this Commit
+          "Federated" : "arn:aws:iam::529088270180:role/oidc_test:oidc-provider/token.actions.githubusercontent.com" # Change OIDC ARN and Remove this Commit
         },
         "Action" : "sts:AssumeRoleWithWebIdentity",
         "Condition" : {
