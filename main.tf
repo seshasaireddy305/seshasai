@@ -8,9 +8,6 @@ resource "aws_iam_role" "example" {
   name = "oidc-role"
 
   assume_role_policy = jsonencode({
-   
-
-
     "Version": "2012-10-17",
     "Statement": [
         {
@@ -28,22 +25,9 @@ resource "aws_iam_role" "example" {
                 },
                 "ForAllValues:StringEquals": {
                     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                    "token.actions.githubusercontent.com:iss": "https://token.actions.githubusercontent.com"
+                    "token.actions.githubusercontent.com:iss": "https://token.actions.githubusercontent.com" 
                 }
-
-
-
-    
-
-
-
-
-
-
-
-
-
-        }
+      }
       }
     ]
   })

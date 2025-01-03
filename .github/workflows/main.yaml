@@ -35,6 +35,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::529088270180:role/oidc-role
+          audience: sts.amazonaws.com
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
