@@ -34,7 +34,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::529088270180:role/oidc-role
+          role-to-assume: arn:aws:iam::529088270180:role/oidc_test
           audience: sts.amazonaws.com
           aws-region: ${{ env.AWS_REGION }}
 
