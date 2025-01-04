@@ -1,129 +1,34 @@
-name: AWS Terraform Workflow
+name: Continuous Delivery
 
-on:
- workflow_dispatch:
-    inputs:
-      action:
-        description: 'Action to perform (apply or destroy)'
-        required: true
-        type: choice
-        options:
-        - apply
-        - destroy
-
-env:
-  AWS_REGION: "us-east-1"
-
-permissions:
-  id-token: write
-  contents: read
+on: [push, pull_request]
 
 jobs:
-  terraform-init:
-    name: Terraform Init Stage
+  build-and-push:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
-      - name: Git clone the repository
-        uses: actions/checkout@v2
-       
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-     - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v2
-          with:
-          role-to-assume: arn:aws:iam::529088270180:role/oidc_test
-          aws-region: us-east-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: arn:aws:iam::XXXXXXXXXXXX:role/github-actions
+          aws-region: eu-west-1
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1  
-        
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  terraform-plan:
-    name: Terraform Plan Stage
-    runs-on: ubuntu-latest
-    needs: terraform-init
-
-    steps:
-      - name: Git clone the repository
-        uses: actions/checkout@v4
-        
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::529088270180:role/oidc-role
-          aws-region: eu-west-1
-
-     - name: Terraform Plan (Debug)
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: my/repo
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          terraform init
-          terraform providers # Show provider versions
-          terraform plan -no-color # Plan without color for better logs
-          terraform plan -out=tfplan
-
-      - name: Upload Terraform plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: tfplan 
-
-      - name: Upload Terraform plan new
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan-${{ github.sha }}
-          path: tfplan
-
-  terraform-apply-destroy:
-    name: Terraform Apply or Destroy Stage
-    runs-on: ubuntu-latest
-    needs: terraform-plan
-    # Remove 'if' condition here to always run after 'terraform-plan'
-
-    steps:
-      - name: Git clone the repository
-        uses: actions/checkout@v4
-        
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::529088270180:role/oidc-role
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Download Terraform plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan-${{ github.sha }}
-          path: .
-      - name: Terraform Apply or Destroy
-        run: |
-            echo "Action input from event: ${{ github.event.inputs.action }}" 
-            action=${{ github.event.inputs.action }}  
-            if [ -z "$action" ]; then  # Check if $action is empty
-              echo "Action not provided, using default 'apply'."
-              action="destroy"          # Set default to 'apply'
-            fi 
-            echo "Final action: $action"
-            if [ "$action" == "apply" ]; then  # Correct reference
-              terraform init -upgrade
-              terraform apply -auto-approve tfplan
-            elif [ "$action" == "destroy" ]; then  # Correct reference
-              terraform init -upgrade
-              terraform destroy -auto-approve
-            else
-              echo "Invalid action. Choose 'apply' or 'destroy'."
-              exit 1 
-            fi
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
