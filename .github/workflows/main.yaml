@@ -123,4 +123,3 @@ jobs:
               echo "Invalid action. Choose 'apply' or 'destroy'."
               exit 1 
             fi
-            
