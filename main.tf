@@ -27,17 +27,17 @@ resource "aws_iam_role" "example" {
       },
       {
         "Effect": "Allow",
-        "Principal": {
-          "Federated": "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com"
+      "Principal": {
+        "Federated": "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
-        "Action": "sts:AssumeRoleWithWebIdentity",
-        "Condition": {
-          "StringEquals": {
-            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-          },
-          "StringLike": {
-            "token.actions.githubusercontent.com:sub": "repo:seshasaireddy305/seshasai:*"
-          }
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:seshasaireddy305/seshasai:*"
+        }
         }
       }
     ]
