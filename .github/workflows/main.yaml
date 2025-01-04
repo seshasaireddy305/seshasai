@@ -31,12 +31,12 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
+      - - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v2
+          with:
           role-to-assume: arn:aws:iam::529088270180:role/oidc_test
-          audience: sts.amazonaws.com
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
+        
 
       - name: Terraform Init
         run: terraform init
