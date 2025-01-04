@@ -13,7 +13,7 @@ resource "aws_iam_role" "example" {
       {
         "Effect": "Allow",
         "Principal": {
-          "Federated": "cognito-identity.amazonaws.com"
+          "Federated": "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com"
         },
         "Action": "sts:AssumeRoleWithWebIdentity",
         "Condition": {
