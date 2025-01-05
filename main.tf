@@ -32,12 +32,12 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
   }
 
 }
-resource "aws_iam_role" "github_actions1" {
+resource "aws_iam_role" "github_actions" {
   name               = "github-actions"
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json 
 }
 
-data "aws_iam_policy_document" "github_actions1" {
+data "aws_iam_policy_document" "github_actions" {
   statement {
     actions = [
       "ecr:BatchGetImage",
@@ -58,13 +58,13 @@ data "aws_iam_policy_document" "github_actions1" {
   }
 }
 
-resource "aws_iam_policy" "github_actions1" {
+resource "aws_iam_policy" "github_actions" {
   name        = "github-actions"
   description = "Grant Github Actions the ability to push to ECR"
   policy      = data.aws_iam_policy_document.github_actions1.json
 }
 
 resource "aws_iam_role_policy_attachment" "github_actions" {
-  role       = aws_iam_role.github_actions1.name
-  policy_arn = aws_iam_policy.github_actions1.arn
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions.arn
 }
