@@ -1,29 +1,125 @@
- # Sample workflow to access AWS resources when workflow is tied to branch
-# The workflow Creates static website using aws s3
-name: AWS example workflow
+name: AWS Terraform Workflow
+
 on:
-  push:
-    branches: [ "main" ]
+ workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform (apply or destroy)'
+        required: true
+        type: choice
+        options:
+        - apply
+        - destroy
+
 env:
-  BUCKET_NAME : "githubsample-645373" # Change bucket name
-  AWS_REGION : "ap-south-1"
-# permission can be added at job level or workflow level
+  BUCKET_NAME: "githubsample-645373"
+  AWS_REGION: "ap-south-1"
+
 permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  id-token: write
+  contents: read
+
 jobs:
-  S3PackageUpload:
+  terraform-init:
+    name: Terraform Init Stage
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v2
+       
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::666562444707:role/new_oidc_github
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+  terraform-plan:
+    name: Terraform Plan Stage
+    runs-on: ubuntu-latest
+    needs: terraform-init
+
     steps:
       - name: Git clone the repository
         uses: actions/checkout@v4
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com # need to update with your role ARN
-          audience: sts.amazonaws.com
+          role-to-assume: arn:aws:iam::666562444707:role/new_oidc_github
           aws-region: ${{ env.AWS_REGION }}
-      # Upload a file to AWS s3
-      - name:  Copy index.html to s3
+
+      - name: Terraform Plan (Debug)
         run: |
-          aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}/ --acl public-read
+          terraform init
+          terraform providers # Show provider versions
+          terraform plan -no-color # Plan without color for better logs
+          terraform plan -out=tfplan
+
+      - name: Upload Terraform plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan 
+
+      - name: Upload Terraform plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: tfplan
+
+  terraform-apply-destroy:
+    name: Terraform Apply or Destroy Stage
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    # Remove 'if' condition here to always run after 'terraform-plan'
+
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+        
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::666562444707:role/new_oidc_github
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download Terraform plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: .
+      - name: Terraform Apply or Destroy
+        run: |
+            echo "Action input from event: ${{ github.event.inputs.action }}" 
+            action=${{ github.event.inputs.action }}  
+            if [ -z "$action" ]; then  # Check if $action is empty
+              echo "Action not provided, using default 'apply'."
+              action="destroy"          # Set default to 'apply'
+            fi 
+            echo "Final action: $action"
+            if [ "$action" == "apply" ]; then  # Correct reference
+              terraform init -upgrade
+              terraform apply -auto-approve tfplan
+            elif [ "$action" == "destroy" ]; then  # Correct reference
+              terraform init -upgrade
+              terraform destroy -auto-approve
+            else
+              echo "Invalid action. Choose 'apply' or 'destroy'."
+              exit 1 
+            fi
