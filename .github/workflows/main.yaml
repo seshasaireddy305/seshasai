@@ -63,7 +63,7 @@ jobs:
         run: |
           terraform init
           terraform providers # Show provider versions
-          terraform plan -no-color # Plan without color for better logs
+          terraform plan -no-color # Plan without color for better logs 
           terraform plan -out=tfplan
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
