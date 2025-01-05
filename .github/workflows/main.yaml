@@ -35,7 +35,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::666562444707:role/new_oidc_github
+          role-to-assume: arn:aws:iam::529088270180:role/Oidc_role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
@@ -57,7 +57,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::666562444707:role/new_oidc_github
+          role-to-assume: arn:aws:iam::529088270180:role/Oidc_role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Plan (Debug)
