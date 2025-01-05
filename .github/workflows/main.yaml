@@ -12,8 +12,7 @@ on:
         - destroy
 
 env:
-  BUCKET_NAME: "githubsample-645373"
-  AWS_REGION: "ap-south-1"
+  AWS_REGION: "us-east-1"
 
 permissions:
   id-token: write
@@ -35,7 +34,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::529088270180:role/new_oidc_github
+          role-to-assume: arn:aws:iam::529088270180:role/oidc-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
@@ -57,7 +56,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::529088270180:role/new_oidc_github
+          role-to-assume: arn:aws:iam::529088270180:role/oidc-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Plan (Debug)
@@ -66,14 +65,13 @@ jobs:
           terraform providers # Show provider versions
           terraform plan -no-color # Plan without color for better logs
           terraform plan -out=tfplan
-
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: tfplan 
 
-      - name: Upload Terraform plan
+      - name: Upload Terraform plan new
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ github.sha }}
@@ -96,7 +94,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::666562444707:role/new_oidc_github
+          role-to-assume: arn:aws:iam::529088270180:role/oidc-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Download Terraform plan
