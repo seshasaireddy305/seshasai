@@ -1,7 +1,12 @@
-resource "aws_iam_openid_connect_provider" "github" {
-  url             = "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+resource "aws_iam_openid_connect_provider" "default" {
+  url = "https://accounts.google.com"
+
+  client_id_list = [
+    "266362248691-342342xasdasdasda-apps.googleusercontent.com",
+  ]
+
+  thumbprint_list = ["cf23df2207d99a74fbe169e3eba035e633b65d94"]
+
 }
 
 data "aws_iam_policy_document" "github_actions_assume_role" {
@@ -27,7 +32,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
   }
 
 }
-resource "aws_iam_role" "github_actions" {
+resource "aws_iam_role" "github_actions1" {
   name               = "github-actions"
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json 
 }
