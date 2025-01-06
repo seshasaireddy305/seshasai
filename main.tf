@@ -1,12 +1,6 @@
 data "aws_iam_openid_connect_provider" "existing" {
   url = "https://token.actions.githubusercontent.com"
 }
-resource "aws_iam_openid_connect_provider" "github" {
-  count           = length(data.aws_iam_openid_connect_provider.existing.id) == 0 ? 1 : 0
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-}
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -55,7 +49,7 @@ data "aws_iam_policy_document" "github_actions" {
   }
 }
 
-resource "aws_iam_policy" "github_actions" {
+resource "aws_iam_policy" "github-actions" {
   name        = "github-actions"
   description = "Grant Github Actions the ability to push to ECR"
   policy      = data.aws_iam_policy_document.github_actions.json
@@ -63,5 +57,5 @@ resource "aws_iam_policy" "github_actions" {
 
 resource "aws_iam_role_policy_attachment" "github_actions" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.github_actions.arn
+  policy_arn = aws_iam_policy.github-actions.arn
 }
