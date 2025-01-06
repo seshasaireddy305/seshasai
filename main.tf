@@ -1,5 +1,5 @@
 data "aws_iam_openid_connect_provider" "existing" {
-  url = "https://token.actions.githubusercontent.com"
+  arn = "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com"
 }
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
