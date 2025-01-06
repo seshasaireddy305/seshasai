@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "github_actions" {
 }
 
 resource "aws_iam_policy" "github-actions" {
-  name        = "github-actions"
+  name        = "github"
   description = "Grant Github Actions the ability to push to ECR"
   policy      = data.aws_iam_policy_document.github_actions.json
 }
