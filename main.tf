@@ -2,19 +2,12 @@ data "aws_iam_openid_connect_provider" "existing" {
   url = "https://token.actions.githubusercontent.com"
 }
 
-resource "aws_iam_openid_connect_provider" "github" {
-  count           = length(data.aws_iam_openid_connect_provider.existing.id) == 0 ? 1 : 0
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-}
-
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.default.arn]
+      identifiers = [data.aws_iam_openid_connect_provider.existing.arn]
     }
     condition {
       test     = "StringEquals"
@@ -30,11 +23,11 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       ]
     }
   }
-
 }
+
 resource "aws_iam_role" "github_actions" {
   name               = "github-actions"
-  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json 
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
 }
 
 data "aws_iam_policy_document" "github_actions" {
@@ -52,8 +45,7 @@ data "aws_iam_policy_document" "github_actions" {
     condition {
       test     = "StringEquals"
       variable = "aws:ResourceTag/permit-github-action"
-
-      values = ["true"]
+      values   = ["true"]
     }
   }
 }
@@ -61,7 +53,7 @@ data "aws_iam_policy_document" "github_actions" {
 resource "aws_iam_policy" "github_actions" {
   name        = "github-actions"
   description = "Grant Github Actions the ability to push to ECR"
-  policy      = data.aws_iam_policy_document.github_actions1.json
+  policy      = data.aws_iam_policy_document.github_actions.json
 }
 
 resource "aws_iam_role_policy_attachment" "github_actions" {
