@@ -83,3 +83,11 @@ resource "aws_instance" "web" {
     Name = "HelloWorld"
   }
 }
+
+resource "aws_s3_bucket" "example" {
+  bucket = "my-tf-test-bucket1342434"
+
+  tags = {
+    Name        = "My bucket"
+  }
+}
