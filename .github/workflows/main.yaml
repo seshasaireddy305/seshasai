@@ -1,15 +1,19 @@
 name: AWS Terraform Workflow
 
+# on:
+#  workflow_dispatch:
+#     inputs:
+#       action:
+#         description: 'Action to perform (apply or destroy)'
+#         required: true
+#         type: choice
+#         options:
+#         - apply
+#         - destroy
 on:
- workflow_dispatch:
-    inputs:
-      action:
-        description: 'Action to perform (apply or destroy)'
-        required: true
-        type: choice
-        options:
-        - apply
-        - destroy
+ push:
+  branches:
+    - main
 
 env:
   BUCKET_NAME: "githubsample-645373"
@@ -106,20 +110,23 @@ jobs:
           path: .
       - name: Terraform Apply or Destroy
         run: |
-            echo "Action input from event: ${{ github.event.inputs.action }}" 
-            action=${{ github.event.inputs.action }}  
-            if [ -z "$action" ]; then  # Check if $action is empty
-              echo "Action not provided, using default 'apply'."
-              action="destroy"          # Set default to 'apply'
-            fi 
-            echo "Final action: $action"
-            if [ "$action" == "apply" ]; then  # Correct reference
               terraform init -upgrade
               terraform apply -auto-approve tfplan
-            elif [ "$action" == "destroy" ]; then  # Correct reference
-              terraform init -upgrade
-              terraform destroy -auto-approve
-            else
-              echo "Invalid action. Choose 'apply' or 'destroy'."
-              exit 1 
-            fi
+
+            # echo "Action input from event: ${{ github.event.inputs.action }}" 
+            # action=${{ github.event.inputs.action }}  
+            # if [ -z "$action" ]; then  # Check if $action is empty
+            #   echo "Action not provided, using default 'apply'."
+            #   action="destroy"          # Set default to 'apply'
+            # fi 
+            # echo "Final action: $action"
+            # if [ "$action" == "apply" ]; then  # Correct reference
+            #   terraform init -upgrade
+            #   terraform apply -auto-approve tfplan
+            # elif [ "$action" == "destroy" ]; then  # Correct reference
+            #   terraform init -upgrade
+            #   terraform destroy -auto-approve
+            # else
+            #   echo "Invalid action. Choose 'apply' or 'destroy'."
+            #   exit 1 
+            # fi
