@@ -95,7 +95,7 @@ resource "aws_key_pair" "deployer" {
 resource "aws_instance" "Web" {
   ami           = "ami-0c02fb55956c7d316" # Update with a valid AMI ID for your region
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.public.id
+  # subnet_id     = aws_subnet.public.id
   security_groups = [
     aws_security_group.ec2_sg.name,
   ]
