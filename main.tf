@@ -95,6 +95,6 @@ resource "aws_instance" "WebServerInstance" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
 
-  subnet_id              = aws_subnet.public      # Keep this for VPC
-  vpc_security_group_ids = aws_security_group.ec2_sg   # Use Security Group ID here
+  subnet_id              = aws_subnet.public     # Keep this for VPC
+  vpc_security_group_ids = [aws_security_group.ec2_sg]  # Use Security Group ID here
 }
