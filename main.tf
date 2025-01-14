@@ -1,93 +1,107 @@
-# data "aws_iam_openid_connect_provider" "existing" {
-#   arn = "arn:aws:iam::529088270180:oidc-provider/token.actions.githubusercontent.com"
-# }
-# data "aws_iam_policy_document" "github_actions_assume_role" {
-#   statement {
-#     actions = ["sts:AssumeRoleWithWebIdentity"]
-#     principals {
-#       type        = "Federated"
-#       identifiers = [data.aws_iam_openid_connect_provider.existing.arn]
-#     }
-#     condition {
-#       test     = "StringEquals"
-#       variable = "token.actions.githubusercontent.com:aud"
-#       values   = ["sts.amazonaws.com"]
-#     }
-#     condition {
-#       test     = "StringLike"
-#       variable = "token.actions.githubusercontent.com:sub"
-#       values = [
-#         "repo:org1/*:*",
-#         "repo:org2/*:*"
-#       ]
-#     }
-#   }
-# }
-
-# resource "aws_iam_role" "github_actions" {
-#   name               = "github-actions"
-#   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
-# }
-
-# data "aws_iam_policy_document" "github_actions" {
-#   statement {
-#     actions = [
-#       "ecr:BatchGetImage",
-#       "ecr:BatchCheckLayerAvailability",
-#       "ecr:CompleteLayerUpload",
-#       "ecr:GetDownloadUrlForLayer",
-#       "ecr:InitiateLayerUpload",
-#       "ecr:PutImage",
-#       "ecr:UploadLayerPart",
-#     ]
-#     resources = ["*"]
-#     condition {
-#       test     = "StringEquals"
-#       variable = "aws:ResourceTag/permit-github-action"
-#       values   = ["true"]
-#     }
-#   }
-# }
-
-# # resource "aws_iam_policy" "github-actions" {
-# #   name        = "github"
-# #   description = "Grant Github Actions the ability to push to ECR"
-# #   policy      = data.aws_iam_policy_document.github_actions.json
-# # }
-
-# resource "aws_iam_role_policy_attachment" "github_actions" {
-#   role       = aws_iam_role.github_actions.name
-#   policy_arn = aws_iam_policy.github_actions.arn
-# }
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+# Create a VPC
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+  tags = {
+    Name = "MainVPC"
   }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
 }
 
+# Create public and private subnets
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+  availability_zone       = "us-east-1a"
+  tags = {
+    Name = "PublicSubnet"
+  }
+}
+
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-east-1a"
+  tags = {
+    Name = "PrivateSubnet"
+  }
+}
+
+# Create an Internet Gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = "InternetGateway"
+  }
+}
+
+# Create a route table and associate it with the public subnet
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+  tags = {
+    Name = "PublicRouteTable"
+  }
+}
+
+resource "aws_route_table_association" "public_association" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Security Group for the EC2 instance
+resource "aws_security_group" "ec2_sg" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    description      = "Allow SSH"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description      = "Allow HTTP"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "EC2SecurityGroup"
+  }
+}
+
+# Key pair for SSH access
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-key"
+  public_key = "<YOUR_PUBLIC_KEY_HERE>" # Replace with your actual public key
+}
+
+# Create an EC2 instance
 resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
+  ami           = "ami-0c02fb55956c7d316" # Update with a valid AMI ID for your region
   instance_type = "t2.micro"
+  subnet_id     = aws_subnet.public.id
+  security_groups = [
+    aws_security_group.ec2_sg.name,
+  ]
+  key_name      = aws_key_pair.deployer.key_name
 
   tags = {
-    Name = "HelloWorld"
-  }
-}
-
-resource "aws_s3_bucket" "example" {
-  bucket = "my-tf-test-bucket1342434"
-
-  tags = {
-    Name = "My bucket"
+    Name = "WebServerInstance"
   }
 }
