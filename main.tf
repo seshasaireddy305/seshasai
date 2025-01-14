@@ -92,7 +92,7 @@ resource "aws_key_pair" "deployer" {
 }
 
 # Create an EC2 instance
-resource "aws_instance" "web" {
+resource "aws_instance" "WebServerInstance" {
   ami           = "ami-0c02fb55956c7d316" # Update with a valid AMI ID for your region
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public.id
